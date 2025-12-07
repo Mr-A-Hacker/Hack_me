@@ -1,1 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Phishing Demo</title>
+  <style>
+    body { background:#0b0b12; color:#f50ac0; font-family:monospace; }
+    .panel { border:1px solid #f50ac0; padding:16px; border-radius:12px; box-shadow:0 0 12px #f50ac0; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h2>Phishing Demo</h2>
+    <p>This page demonstrates what metadata a phishing site could collect automatically.</p>
+    <pre id="out"></pre>
+  </div>
 
+<script>
+async function gatherClientData() {
+  return {
+    screen: { width: screen.width, height: screen.height, colorDepth: screen.colorDepth },
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    lang: navigator.language,
+    cookiesEnabled: navigator.cookieEnabled
+  };
+}
+
+async function autoCollect() {
+  const payload = await gatherClientData();
+  const res = await fetch('/collect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  document.getElementById('out').textContent = JSON.stringify(data.received, null, 2);
+}
+
+// Run automatically when the page loads
+window.onload = autoCollect;
+</script>
+</body>
+</html>
