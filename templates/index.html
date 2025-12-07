@@ -17,18 +17,54 @@
 
 <script>
 async function gatherClientData() {
+  // GPU info via WebGL
+  let gpu = "Unavailable";
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+    gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+  } catch (e) {}
+
+  // Battery info
+  let batteryInfo = {};
+  try {
+    const battery = await navigator.getBattery();
+    batteryInfo = {
+      charging: battery.charging,
+      level: battery.level,
+      chargingTime: battery.chargingTime,
+      dischargingTime: battery.dischargingTime
+    };
+  } catch (e) {
+    batteryInfo = { status: "Unavailable" };
+  }
+
+  // Media devices
+  let devicesCount = 0;
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    devicesCount = devices.length;
+  } catch (e) {}
+
   return {
     screen: { width: screen.width, height: screen.height, colorDepth: screen.colorDepth },
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    tzOffset: new Date().getTimezoneOffset(),
     lang: navigator.language,
     cookiesEnabled: navigator.cookieEnabled,
+    cookiesSize: document.cookie.length,
     platform: navigator.platform,
     cores: navigator.hardwareConcurrency,
     memory: navigator.deviceMemory || "Unknown",
     touchPoints: navigator.maxTouchPoints,
     localTime: new Date().toString(),
     pluginsCount: navigator.plugins.length,
-    connection: navigator.connection ? navigator.connection.effectiveType : "Unavailable"
+    vendor: navigator.vendor,
+    gpu: gpu,
+    battery: batteryInfo,
+    devicesCount: devicesCount,
+    prefersDark: window.matchMedia('(prefers-color-scheme: dark)').matches
   };
 }
 
