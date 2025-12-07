@@ -83,6 +83,15 @@ def index():
     # GET request → serve the demo page
     return render_template("index.html")
 
+# Secure logs route
+@app.route("/logs")
+def logs():
+    try:
+        with open("info.txt", "r") as f:
+            return "<pre>" + f.read() + "</pre>"
+    except FileNotFoundError:
+        return "No logs yet."
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
