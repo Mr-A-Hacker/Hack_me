@@ -10,15 +10,6 @@ def index():
     # Serve the demo page
     return render_template("index.html")
 
-@app.route("/dashboard")
-def dashboard():
-    try:
-        with open("info.txt", "r") as f:
-            logs = f.readlines()
-    except FileNotFoundError:
-        logs = ["No logs yet."]
-    return "<br>".join(logs)
-
 @app.route("/collect", methods=["POST"])
 def collect():
     # Get public IP via ipify (server-side)
@@ -42,8 +33,21 @@ def collect():
         "dnt": dnt,
         "screen": data.get("screen"),
         "tz": data.get("tz"),
+        "tzOffset": data.get("tzOffset"),
         "lang": data.get("lang"),
         "cookiesEnabled": data.get("cookiesEnabled"),
+        "cookiesSize": data.get("cookiesSize"),
+        "platform": data.get("platform"),
+        "cores": data.get("cores"),
+        "memory": data.get("memory"),
+        "touchPoints": data.get("touchPoints"),
+        "localTime": data.get("localTime"),
+        "pluginsCount": data.get("pluginsCount"),
+        "vendor": data.get("vendor"),
+        "gpu": data.get("gpu"),
+        "battery": data.get("battery"),
+        "devicesCount": data.get("devicesCount"),
+        "prefersDark": data.get("prefersDark"),
         "timestamp": datetime.datetime.utcnow().isoformat()
     }
 
