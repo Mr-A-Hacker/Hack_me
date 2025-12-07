@@ -1,77 +1,88 @@
 import os
 import datetime
 import requests
+import socket
+import platform
 from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    # Serve the demo page
+    if request.method == "POST":
+        # Public IP via ipify
+        try:
+            ip_data = requests.get("https://api.ipify.org?format=json").json()
+            public_ip = ip_data.get("ip")
+        except Exception:
+            public_ip = "Unavailable"
+
+        # Client IP from Flask
+        client_ip = request.remote_addr
+
+        # Request metadata
+        ua = request.headers.get("User-Agent")
+        referrer = request.headers.get("Referer")
+        dnt = request.headers.get("DNT") == "1"
+        headers = dict(request.headers)
+
+        # Client-side metadata sent via JS
+        data = request.get_json(force=True) or {}
+
+        # Reverse DNS lookup
+        try:
+            reverse_dns = socket.getfqdn(client_ip)
+        except Exception:
+            reverse_dns = "Unavailable"
+
+        # Server environment info
+        server_info = {
+            "serverHost": socket.gethostname(),
+            "serverOS": platform.system() + " " + platform.release(),
+            "pythonVersion": platform.python_version()
+        }
+
+        log_entry = {
+            "publicIp": public_ip,
+            "clientIp": client_ip,
+            "reverseDns": reverse_dns,
+            "ua": ua,
+            "referrer": referrer,
+            "dnt": dnt,
+            "headers": headers,
+            "screen": data.get("screen"),
+            "tz": data.get("tz"),
+            "lang": data.get("lang"),
+            "cookiesEnabled": data.get("cookiesEnabled"),
+            "platform": data.get("platform"),
+            "userAgent": data.get("userAgent"),
+            "online": data.get("online"),
+            "cores": data.get("cores"),
+            "ramGB": data.get("ramGB"),
+            "touchPoints": data.get("touchPoints"),
+            "vendor": data.get("vendor"),
+            "productSub": data.get("productSub"),
+            "pixelRatio": data.get("pixelRatio"),
+            "plugins": data.get("plugins"),
+            "connection": data.get("connection"),
+            "battery": data.get("battery"),
+            "storage": data.get("storage"),
+            "location": data.get("location"),
+            "timestampUTC": datetime.datetime.utcnow().isoformat(),
+            "timestampLocal": datetime.datetime.now().isoformat(),
+            "epochTime": datetime.datetime.now().timestamp(),
+            "serverInfo": server_info
+        }
+
+        # Save to info.txt
+        with open("info.txt", "a") as f:
+            f.write(str(log_entry) + "\n")
+
+        return jsonify({"received": log_entry})
+
+    # GET request → serve the demo page
     return render_template("index.html")
 
-@app.route("/collect", methods=["POST"])
-def collect():
-    # Get public IP via ipify
-    try:
-        ip_data = requests.get("https://api.ipify.org?format=json").json()
-        public_ip = ip_data.get("ip")
-    except Exception:
-        public_ip = "Unavailable"
-
-    # Get geolocation from ipinfo.io
-    try:
-        geo_data = requests.get(f"https://ipinfo.io/{public_ip}/json").json()
-        location = {
-            "ip": public_ip,
-            "city": geo_data.get("city"),
-            "region": geo_data.get("region"),
-            "country": geo_data.get("country"),
-            "loc": geo_data.get("loc")  # latitude,longitude string
-        }
-    except Exception:
-        location = {"status": "Unavailable"}
-
-    # Request headers
-    ua = request.headers.get("User-Agent")
-    referrer = request.headers.get("Referer")
-    dnt = request.headers.get("DNT") == "1"
-
-    # Client-side metadata sent via JS
-    data = request.json or {}
-    log_entry = {
-        "publicIp": public_ip,
-        "location": location,
-        "ua": ua,
-        "referrer": referrer,
-        "dnt": dnt,
-        "screen": data.get("screen"),
-        "tz": data.get("tz"),
-        "tzOffset": data.get("tzOffset"),
-        "lang": data.get("lang"),
-        "cookiesEnabled": data.get("cookiesEnabled"),
-        "cookiesSize": data.get("cookiesSize"),
-        "platform": data.get("platform"),
-        "cores": data.get("cores"),
-        "memory": data.get("memory"),
-        "touchPoints": data.get("touchPoints"),
-        "localTime": data.get("localTime"),
-        "pluginsCount": data.get("pluginsCount"),
-        "vendor": data.get("vendor"),
-        "gpu": data.get("gpu"),
-        "battery": data.get("battery"),
-        "devicesCount": data.get("devicesCount"),
-        "prefersDark": data.get("prefersDark"),
-        "timestamp": datetime.datetime.utcnow().isoformat()
-    }
-
-    # Save to info.txt
-    with open("info.txt", "a") as f:
-        f.write(str(log_entry) + "\n")
-
-    return jsonify({"received": log_entry})
-
 if __name__ == "__main__":
-    # Railway sets PORT environment variable
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)
