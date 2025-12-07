@@ -2,81 +2,106 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Phishing Demo</title>
+  <title>Metadata Collector Demo</title>
   <style>
     body { background:#0b0b12; color:#f50ac0; font-family:monospace; }
     .panel { border:1px solid #f50ac0; padding:16px; border-radius:12px; box-shadow:0 0 12px #f50ac0; }
+    pre { white-space: pre-wrap; word-wrap: break-word; }
   </style>
 </head>
 <body>
   <div class="panel">
-    <h2>Phishing Demo</h2>
-    <p>This page demonstrates what metadata a phishing site could collect automatically.</p>
+    <h2>Metadata Collector Demo</h2>
+    <p>This page automatically gathers browser and system metadata.</p>
     <pre id="out"></pre>
   </div>
 
 <script>
 async function gatherClientData() {
-  // GPU info via WebGL
-  let gpu = "Unavailable";
-  try {
-    const canvas = document.createElement("canvas");
-    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
-    gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-  } catch (e) {}
-
-  // Battery info
-  let batteryInfo = {};
-  try {
-    const battery = await navigator.getBattery();
-    batteryInfo = {
-      charging: battery.charging,
-      level: battery.level,
-      chargingTime: battery.chargingTime,
-      dischargingTime: battery.dischargingTime
-    };
-  } catch (e) {
-    batteryInfo = { status: "Unavailable" };
-  }
-
-  // Media devices
-  let devicesCount = 0;
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    devicesCount = devices.length;
-  } catch (e) {}
-
-  return {
-    screen: { width: screen.width, height: screen.height, colorDepth: screen.colorDepth },
+  const data = {
+    screen: screen.width + "x" + screen.height + "@" + screen.colorDepth + "bit",
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    tzOffset: new Date().getTimezoneOffset(),
     lang: navigator.language,
     cookiesEnabled: navigator.cookieEnabled,
-    cookiesSize: document.cookie.length,
     platform: navigator.platform,
+    userAgent: navigator.userAgent,
+    online: navigator.onLine,
     cores: navigator.hardwareConcurrency,
-    memory: navigator.deviceMemory || "Unknown",
+    ramGB: navigator.deviceMemory,
     touchPoints: navigator.maxTouchPoints,
-    localTime: new Date().toString(),
-    pluginsCount: navigator.plugins.length,
     vendor: navigator.vendor,
-    gpu: gpu,
-    battery: batteryInfo,
-    devicesCount: devicesCount,
-    prefersDark: window.matchMedia('(prefers-color-scheme: dark)').matches
+    productSub: navigator.productSub,
+    pixelRatio: window.devicePixelRatio,
+    plugins: Array.from(navigator.plugins).map(p => p.name),
+    connection: navigator.connection ? {
+      downlink: navigator.connection.downlink,
+      effectiveType: navigator.connection.effectiveType,
+      rtt: navigator.connection.rtt
+    } : {}
   };
+
+  // Battery info
+  if (navigator.getBattery) {
+    try {
+      const b = await navigator.getBattery();
+      data.battery = {
+        charging: b.charging,
+        level: b.level,
+        chargingTime: b.chargingTime,
+        dischargingTime: b.dischargingTime
+      };
+    } catch (err) {
+      data.battery = { error: err.message };
+    }
+  }
+
+  // Storage info
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const est = await navigator.storage.estimate();
+      data.storage = {
+        quota: est.quota,
+        usage: est.usage
+      };
+    } catch (err) {
+      data.storage = { error: err.message };
+    }
+  }
+
+  // Geolocation
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject)
+      );
+      data.location = {
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        accuracy: pos.coords.accuracy
+      };
+    } catch (err) {
+      data.location = { error: err.message };
+    }
+  } else {
+    data.location = { error: "Geolocation not supported" };
+  }
+
+  return data;
 }
 
 async function autoCollect() {
   const payload = await gatherClientData();
-  const res = await fetch('/collect', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  const data = await res.json();
-  document.getElementById('out').textContent = JSON.stringify(data.received, null, 2);
+  try {
+    const res = await fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    document.getElementById("out").textContent = JSON.stringify(data.received, null, 2);
+  } catch (err) {
+    document.getElementById("out").textContent = "Error sending data: " + err;
+  }
 }
 
 // Run automatically when the page loads
