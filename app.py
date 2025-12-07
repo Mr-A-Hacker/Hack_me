@@ -12,12 +12,25 @@ def index():
 
 @app.route("/collect", methods=["POST"])
 def collect():
-    # Get public IP via ipify (server-side)
+    # Get public IP via ipify
     try:
         ip_data = requests.get("https://api.ipify.org?format=json").json()
         public_ip = ip_data.get("ip")
     except Exception:
         public_ip = "Unavailable"
+
+    # Get geolocation from ipinfo.io
+    try:
+        geo_data = requests.get(f"https://ipinfo.io/{public_ip}/json").json()
+        location = {
+            "ip": public_ip,
+            "city": geo_data.get("city"),
+            "region": geo_data.get("region"),
+            "country": geo_data.get("country"),
+            "loc": geo_data.get("loc")  # latitude,longitude string
+        }
+    except Exception:
+        location = {"status": "Unavailable"}
 
     # Request headers
     ua = request.headers.get("User-Agent")
@@ -28,6 +41,7 @@ def collect():
     data = request.json or {}
     log_entry = {
         "publicIp": public_ip,
+        "location": location,
         "ua": ua,
         "referrer": referrer,
         "dnt": dnt,
