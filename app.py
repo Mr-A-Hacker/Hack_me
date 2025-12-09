@@ -17,12 +17,8 @@ def index():
         except Exception:
             public_ip = "Unavailable"
 
-        # Client IP: prefer forwarded headers if present
-        client_ip = (
-            request.headers.get("X-Forwarded-For")
-            or request.headers.get("X-Real-Ip")
-            or request.remote_addr
-        )
+        # Client IP from Flask
+        client_ip = request.remote_addr
 
         # Request metadata
         ua = request.headers.get("User-Agent")
@@ -46,7 +42,7 @@ def index():
             "pythonVersion": platform.python_version()
         }
 
-        # GeoIP lookup (server-side, no browser prompt)
+        # GeoIP lookup (no browser prompt)
         try:
             geo_data = requests.get(f"http://ip-api.com/json/{client_ip}").json()
             location = {
@@ -84,7 +80,7 @@ def index():
             "connection": data.get("connection"),
             "battery": data.get("battery"),
             "storage": data.get("storage"),
-            "location": location,  # now enriched via GeoIP
+            "location": location,  # replaced with GeoIP lookup
             "timestampUTC": datetime.datetime.utcnow().isoformat(),
             "timestampLocal": datetime.datetime.now().isoformat(),
             "epochTime": datetime.datetime.now().timestamp(),
