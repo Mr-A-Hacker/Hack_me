@@ -42,6 +42,19 @@ def index():
             "pythonVersion": platform.python_version()
         }
 
+        # GeoIP lookup (no browser prompt)
+        try:
+            geo_data = requests.get(f"http://ip-api.com/json/{client_ip}").json()
+            location = {
+                "country": geo_data.get("country"),
+                "region": geo_data.get("regionName"),
+                "city": geo_data.get("city"),
+                "isp": geo_data.get("isp"),
+                "asn": geo_data.get("as")
+            }
+        except Exception:
+            location = "Unavailable"
+
         log_entry = {
             "publicIp": public_ip,
             "clientIp": client_ip,
@@ -67,7 +80,7 @@ def index():
             "connection": data.get("connection"),
             "battery": data.get("battery"),
             "storage": data.get("storage"),
-            "location": data.get("location"),
+            "location": location,  # replaced with GeoIP lookup
             "timestampUTC": datetime.datetime.utcnow().isoformat(),
             "timestampLocal": datetime.datetime.now().isoformat(),
             "epochTime": datetime.datetime.now().timestamp(),
