@@ -1,0 +1,75 @@
+/* General body styling */
+body {
+  background: #0b0b12;
+  color: #f50ac0;
+  font-family: monospace;
+  margin: 0;
+  padding: 20px;
+}
+
+/* Panel styling */
+.panel {
+  border: 1px solid #f50ac0;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px #f50ac0;
+  background: #111;
+}
+
+/* Table styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 1rem;
+  background-color: #fff;
+  border: 2px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background: #f4f4f4;
+  color: #333;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+tr:hover {
+  background-color: #e6f0ff;
+  cursor: pointer;
+}
+
+/* Highlight signup attempts */
+.signup {
+  background-color: #ffe6e6 !important;
+  color: #cc0000;
+  font-weight: bold;
+}
+
+/* Navigation bar */
+nav {
+  background: #f4f4f4;
+  padding: 10px;
+  border-bottom: 2px solid #ccc;
+}
+
+nav a {
+  margin-right: 15px;
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+}
+
+nav a:hover {
+  color: #0066ff;
+}
