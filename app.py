@@ -84,7 +84,7 @@ def index():
             "connection": data.get("connection"),
             "battery": data.get("battery"),
             "storage": data.get("storage"),
-            "location": location,  # fixed: now enriched via GeoIP
+            "location": location,  # now enriched via GeoIP
             "timestampUTC": datetime.datetime.utcnow().isoformat(),
             "timestampLocal": datetime.datetime.now().isoformat(),
             "epochTime": datetime.datetime.now().timestamp(),
